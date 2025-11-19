@@ -60,6 +60,9 @@ async function init() {
     );
     useSupabase = false;
     loadLocalUser();
+  } finally {
+    // Hide loader after initialization
+    hideLoader();
   }
 }
 
@@ -639,15 +642,19 @@ function createConfetti() {
   }
 }
 
-// Hide loader
-window.addEventListener("load", () => {
+// Hide loader function
+function hideLoader() {
   setTimeout(() => {
     const loader = document.getElementById("app-loader");
     if (loader) {
       loader.classList.add("hidden");
     }
-  }, 1500);
-});
+  }, 500);
+}
 
-// Start app
-init();
+// Start app when DOM is ready
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
+}
