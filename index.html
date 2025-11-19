@@ -3,8 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reciclaje Divertido / Fun Recycling</title>
+    <title>EcoPlay - Reciclaje Divertido</title>
     <link rel="stylesheet" href="styles.css" />
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-config.js"></script>
   </head>
   <body>
     <!-- Loader -->
@@ -34,8 +37,70 @@
       </nav>
     </header>
 
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active">
+      <div class="container">
+        <div class="signup-card">
+          <div class="signup-header">
+            <div class="recycle-icon">♻️</div>
+            <h1 class="signup-title">EcoPlay</h1>
+          </div>
+          <p class="signup-subtitle">
+            Aprendé a reciclar jugando<br />
+            <span>Learn to recycle by playing</span>
+          </p>
+
+          <!-- Email Input -->
+          <div class="input-container-3d">
+            <div class="shadow-input"></div>
+            <button type="button" class="input-button-shadow" aria-label="Email">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000" width="25px" height="25px">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+            </button>
+            <input
+              type="email"
+              id="email-input"
+              class="input-search-3d"
+              placeholder="tu@email.com"
+            />
+          </div>
+
+          <!-- Password Input -->
+          <div class="input-container-3d">
+            <div class="shadow-input"></div>
+            <button type="button" class="input-button-shadow" aria-label="Password">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000" width="25px" height="25px"></svg>
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+            </button>
+            <input
+              type="password"
+              id="password-input"
+              class="input-search-3d"
+              placeholder="Contraseña / Password"
+            />
+          </div>
+
+          <button type="button" onclick="handleLogin()" class="btn-start-3d">
+            <span>Iniciar Sesión / Login</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+          </button>
+
+          <div class="auth-switch">
+            <p>¿No tenés cuenta? / Don't have an account?</p>
+            <button type="button" onclick="showSignup()" class="link-btn">Registrate / Sign Up</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Sign Up Screen -->
-    <div id="signup-screen" class="screen active">
+    <div id="signup-screen" class="screen">
       <div class="container">
         <div class="signup-card">
           <div class="signup-header">
@@ -43,49 +108,75 @@
             <h1 class="signup-title">Registro / Sign Up</h1>
           </div>
           <p class="signup-subtitle">
-            Aprendé a reciclar jugando<br />
-            <span>Learn to recycle by playing</span>
+            Creá tu cuenta para empezar<br />
+            <span>Create your account to start</span>
           </p>
 
+          <!-- Name Input -->
           <div class="input-container-3d">
             <div class="shadow-input"></div>
             <button type="button" class="input-button-shadow" aria-label="Usuario">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="#000000"
-                width="25px"
-                height="25px"
-              >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000" width="25px" height="25px">
                 <path d="M0 0h24v24H0z" fill="none"></path>
-                <path
-                  d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
-                ></path>
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"></path>
               </svg>
             </button>
             <input
               type="text"
-              id="name-input"
+              id="signup-name-input"
               class="input-search-3d"
-              placeholder="Ingresá tu nombre"
+              placeholder="Tu nombre / Your name"
             />
           </div>
 
-          <button type="button" onclick="register()" class="btn-start-3d">
-            <span>Comenzar / Start</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              width="24px"
-              height="24px"
-            >
-              <path d="M8 5v14l11-7z" />
+          <!-- Email Input -->
+          <div class="input-container-3d">
+            <div class="shadow-input"></div>
+            <button type="button" class="input-button-shadow" aria-label="Email">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000" width="25px" height="25px">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+              </svg>
+            </button>
+            <input
+              type="email"
+              id="signup-email-input"
+              class="input-search-3d"
+              placeholder="tu@email.com"
+            />
+          </div>
+
+          <!-- Password Input -->
+          <div class="input-container-3d">
+            <div class="shadow-input"></div>
+            <button type="button" class="input-button-shadow" aria-label="Password">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#000000" width="25px" height="25px">
+                <path d="M0 0h24v24H0z" fill="none"/>
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+              </svg>
+            </button>
+            <input
+              type="password"
+              id="signup-password-input"
+              class="input-search-3d"
+              placeholder="Contraseña (min 6 caracteres)"
+            />
+          </div>
+
+          <button type="button" onclick="handleSignup()" class="btn-start-3d">
+            <span>Crear Cuenta / Create Account</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24px" height="24px">
+              <path d="M8 5v14l11-7z"/>
             </svg>
           </button>
+
+          <div class="auth-switch">
+            <p>¿Ya tenés cuenta? / Already have an account?</p>
+            <button type="button" onclick="showLogin()" class="link-btn">Iniciar Sesión / Login</button>
+          </div>
         </div>
       </div>
-    </div>
+    </div>p>
 
     <!-- Home Screen -->
     <div id="home-screen" class="screen">

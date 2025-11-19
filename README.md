@@ -4,29 +4,41 @@ Una aplicación web educativa bilingüe (Español/Inglés) diseñada para enseñ
 
 ## 🎮 Características
 
+- **Sistema de Login**: Autenticación segura con Supabase
 - **Juego Drag & Drop**: Arrastra diferentes tipos de basura a los contenedores correctos
 - **Bilingüe**: Interfaz en español con subtítulos en inglés
 - **5 Categorías de Reciclaje**: Plástico, Papel, Vidrio, Metal y Orgánico
 - **Sistema de Puntos**: Gana 10 puntos por cada respuesta correcta
-- **Ranking**: Tabla de clasificación para competir con otros jugadores
+- **Ranking Global**: Tabla de clasificación en tiempo real con todos los jugadores
 - **Diseño Moderno**: Estilo neobrutalist con efectos 3D y animaciones
 - **Responsive**: Optimizado para dispositivos móviles y tablets
-- **Persistencia de Datos**: Los puntajes se guardan en localStorage
+- **Persistencia Real**: Los puntajes se guardan en Supabase
 
 ## 🚀 Tecnologías
 
 - HTML5
 - CSS3 (con efectos glassmorphism y neobrutalist)
 - JavaScript Vanilla
-- LocalStorage para persistencia de datos
+- Supabase (Backend as a Service)
+  - Authentication
+  - PostgreSQL Database
+  - Row Level Security (RLS)
 - Google Fonts (Poppins)
 
 ## 📱 Cómo Usar
 
+### Configuración Inicial (Solo una vez)
+
+1. Sigue las instrucciones en `SUPABASE-SETUP.md` para configurar la base de datos
+2. Actualiza tu API Key en `supabase-config.js`
+
+### Uso de la Aplicación
+
 1. Abre `index.html` en tu navegador
-2. Ingresa tu nombre para registrarte
-3. Arrastra los items a los contenedores correctos
-4. Acumula puntos y compite en el ranking
+2. Crea una cuenta con email y contraseña
+3. Inicia sesión
+4. Arrastra los items a los contenedores correctos
+5. Acumula puntos y compite en el ranking global
 
 ## 🎨 Diseño
 

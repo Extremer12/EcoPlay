@@ -17,83 +17,213 @@ let currentScore = 0;
 let availableItems = [];
 let draggedItemId = null;
 let draggedItemType = null;
+let supabase = null;
 
 // Initialize app
-function init() {
-  loadCurrentUser();
-  if (currentUser) {
+async function init() {
+  // Initialize Supabase
+  if (window.initSupabase) {
+    window.initSupabase();
+    supabase = window.supabase.createClient(
+      "https://okciuqlwsbrdyshybbqb.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rY2l1cWx3c2JyZHlzaHliYnFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIwNDI4NzAsImV4cCI6MjA0NzYxODg3MH0.8xYvqZQvXqYvXqYvXqYvXqYvXqYvXqYvXqYvXqYvXqY"
+    );
+  }
+
+  await checkSession();
+}
+
+// Check if user is logged in
+async function checkSession() {
+  if (!supabase) {
+    showScreen("login");
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session) {
+    await loadUserData(session.user);
     showScreen("home");
   } else {
-    showScreen("signup");
+    showScreen("login");
   }
 }
 
-// LocalStorage functions
-function getUsers() {
-  const users = localStorage.getItem("recyclingUsers");
-  return users ? JSON.parse(users) : [];
-}
+// Load user data from Supabase
+async function loadUserData(user) {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("auth_id", user.id)
+    .single();
 
-function saveUsers(users) {
-  localStorage.setItem("recyclingUsers", JSON.stringify(users));
-}
+  if (data) {
+    currentUser = {
+      id: data.id,
+      auth_id: data.auth_id,
+      name: data.name,
+      email: user.email,
+      score: data.score || 0,
+    };
+    currentScore = data.score || 0;
+    console.log("✅ User loaded:", currentUser);
+  } else {
+    // Create user profile if doesn't exist
+    const { data: newUser, error: createError } = await supabase
+      .from("users")
+      .insert([
+        {
+          auth_id: user.id,
+          name: user.email.split("@")[0],
+          email: user.email,
+          score: 0,
+        },
+      ])
+      .select()
+      .single();
 
-function loadCurrentUser() {
-  const userId = localStorage.getItem("currentUserId");
-  if (userId) {
-    const users = getUsers();
-    currentUser = users.find((u) => u.id === userId);
-    if (currentUser) {
-      currentScore = currentUser.score;
+    if (newUser) {
+      currentUser = {
+        id: newUser.id,
+        auth_id: newUser.auth_id,
+        name: newUser.name,
+        email: newUser.email,
+        score: 0,
+      };
+      currentScore = 0;
     }
   }
 }
 
-function saveCurrentUser() {
-  if (!currentUser) return;
-
-  const users = getUsers();
-  const index = users.findIndex((u) => u.id === currentUser.id);
-
-  if (index !== -1) {
-    users[index] = currentUser;
-  } else {
-    users.push(currentUser);
-  }
-
-  saveUsers(users);
+// Show/Hide screens
+function showLogin() {
+  showScreen("login");
 }
 
-// Registration
-function register() {
-  const nameInput = document.getElementById("name-input");
-  const name = nameInput.value.trim();
+function showSignup() {
+  showScreen("signup");
+}
 
-  if (!name) {
-    alert("Por favor ingresá tu nombre / Please enter your name");
+// Handle Login
+async function handleLogin() {
+  const email = document.getElementById("email-input").value.trim();
+  const password = document.getElementById("password-input").value;
+
+  if (!email || !password) {
+    alert("Por favor completá todos los campos / Please fill all fields");
     return;
   }
 
-  currentUser = {
-    id: Date.now().toString(),
-    name: name,
-    score: 0,
-  };
+  if (!supabase) {
+    alert("Error: Supabase no está inicializado");
+    return;
+  }
 
-  currentScore = 0;
-  localStorage.setItem("currentUserId", currentUser.id);
-  saveCurrentUser();
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password,
+    });
 
-  showScreen("home");
+    if (error) throw error;
+
+    await loadUserData(data.user);
+    showScreen("home");
+
+    // Clear inputs
+    document.getElementById("email-input").value = "";
+    document.getElementById("password-input").value = "";
+  } catch (error) {
+    console.error("Login error:", error);
+    alert("Error al iniciar sesión: " + error.message);
+  }
+}
+
+// Handle Signup
+async function handleSignup() {
+  const name = document.getElementById("signup-name-input").value.trim();
+  const email = document.getElementById("signup-email-input").value.trim();
+  const password = document.getElementById("signup-password-input").value;
+
+  if (!name || !email || !password) {
+    alert("Por favor completá todos los campos / Please fill all fields");
+    return;
+  }
+
+  if (password.length < 6) {
+    alert(
+      "La contraseña debe tener al menos 6 caracteres / Password must be at least 6 characters"
+    );
+    return;
+  }
+
+  if (!supabase) {
+    alert("Error: Supabase no está inicializado");
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+    });
+
+    if (error) throw error;
+
+    // Create user profile
+    const { error: profileError } = await supabase.from("users").insert([
+      {
+        auth_id: data.user.id,
+        name: name,
+        email: email,
+        score: 0,
+      },
+    ]);
+
+    if (profileError) throw profileError;
+
+    alert(
+      "¡Cuenta creada! Por favor iniciá sesión / Account created! Please login"
+    );
+    showScreen("login");
+
+    // Clear inputs
+    document.getElementById("signup-name-input").value = "";
+    document.getElementById("signup-email-input").value = "";
+    document.getElementById("signup-password-input").value = "";
+  } catch (error) {
+    console.error("Signup error:", error);
+    alert("Error al crear cuenta: " + error.message);
+  }
 }
 
 // Logout
-function logout() {
-  localStorage.removeItem("currentUserId");
+async function logout() {
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
   currentUser = null;
   currentScore = 0;
-  document.getElementById("name-input").value = "";
-  showScreen("signup");
+  showScreen("login");
+}
+
+// Save score to Supabase
+async function saveScore() {
+  if (!currentUser || !supabase) return;
+
+  const { error } = await supabase
+    .from("users")
+    .update({ score: currentScore })
+    .eq("id", currentUser.id);
+
+  if (error) {
+    console.error("Error saving score:", error);
+  } else {
+    console.log("✅ Score saved:", currentScore);
+  }
 }
 
 // Screen navigation
@@ -103,7 +233,7 @@ function showScreen(screenName) {
   });
 
   const header = document.getElementById("header");
-  if (screenName === "signup") {
+  if (screenName === "login" || screenName === "signup") {
     header.classList.add("hidden");
   } else {
     header.classList.remove("hidden");
@@ -155,7 +285,6 @@ function setupBins() {
     bin.addEventListener("dragleave", handleDragLeave);
     bin.addEventListener("drop", handleDrop);
   });
-  console.log("✅ Bins setup complete");
 }
 
 // Render draggable items
@@ -180,7 +309,6 @@ function renderItems() {
 
     container.appendChild(itemDiv);
   });
-  console.log("✅ Items rendered:", availableItems.length);
 }
 
 // Drag handlers
@@ -189,7 +317,6 @@ function handleDragStart(e) {
   draggedItemId = item.dataset.id;
   draggedItemType = item.dataset.type;
   item.classList.add("dragging");
-  console.log("🎯 Dragging:", draggedItemId, "Type:", draggedItemType);
 }
 
 function handleDragEnd(e) {
@@ -211,7 +338,7 @@ function handleDragLeave(e) {
   }
 }
 
-function handleDrop(e) {
+async function handleDrop(e) {
   e.preventDefault();
   const bin = e.currentTarget;
   bin.classList.remove("drag-over");
@@ -219,19 +346,13 @@ function handleDrop(e) {
   const binType = bin.dataset.type;
   const feedback = document.getElementById("feedback");
 
-  console.log("📦 Drop - Item:", draggedItemType, "Bin:", binType);
-
   if (!draggedItemId || !draggedItemType || !binType) {
-    console.error("❌ Missing data");
     return;
   }
 
   if (draggedItemType === binType) {
-    console.log("✅ CORRECT!");
-
     currentScore += 10;
-    currentUser.score = currentScore;
-    saveCurrentUser();
+    await saveScore();
 
     document.getElementById("game-score").textContent = currentScore;
 
@@ -266,7 +387,6 @@ function handleDrop(e) {
       }, 1000);
     }
   } else {
-    console.log("❌ INCORRECT!");
     feedback.textContent = "Intentá otra vez / Try again ❌";
     feedback.className = "feedback incorrect";
 
@@ -287,15 +407,24 @@ function handleDrop(e) {
   draggedItemType = null;
 }
 
-// Update ranking
-function updateRanking() {
-  const users = getUsers();
-  users.sort((a, b) => b.score - a.score);
+// Update ranking from Supabase
+async function updateRanking() {
+  if (!supabase) {
+    document.getElementById("leaderboard").innerHTML =
+      '<p style="text-align: center; color: #4a5568;">Error: No se pudo conectar a la base de datos</p>';
+    return;
+  }
+
+  const { data: users, error } = await supabase
+    .from("users")
+    .select("*")
+    .order("score", { ascending: false })
+    .limit(20);
 
   const leaderboard = document.getElementById("leaderboard");
   leaderboard.innerHTML = "";
 
-  if (users.length === 0) {
+  if (error || !users || users.length === 0) {
     leaderboard.innerHTML =
       '<p style="text-align: center; color: #4a5568;">No hay usuarios todavía / No users yet</p>';
     return;
@@ -309,13 +438,19 @@ function updateRanking() {
     else if (index === 1) item.classList.add("top2");
     else if (index === 2) item.classList.add("top3");
 
+    // Highlight current user
+    if (currentUser && user.id === currentUser.id) {
+      item.style.border = "3px solid #48bb78";
+      item.style.fontWeight = "900";
+    }
+
     const medal =
       index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "";
 
     item.innerHTML = `
       <span class="leaderboard-rank">${medal || index + 1}</span>
       <span class="leaderboard-name">${user.name}</span>
-      <span class="leaderboard-score">${user.score}</span>
+      <span class="leaderboard-score">${user.score || 0}</span>
     `;
 
     leaderboard.appendChild(item);
