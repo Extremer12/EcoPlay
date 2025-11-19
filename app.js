@@ -15,6 +15,8 @@ const gameItems = [
 let currentUser = null;
 let currentScore = 0;
 let availableItems = [];
+let draggedItemId = null;
+let draggedItemType = null;
 
 // Initialize app
 function init() {
@@ -96,12 +98,10 @@ function logout() {
 
 // Screen navigation
 function showScreen(screenName) {
-  // Hide all screens
   document.querySelectorAll(".screen").forEach((screen) => {
     screen.classList.remove("active");
   });
 
-  // Show header except on signup
   const header = document.getElementById("header");
   if (screenName === "signup") {
     header.classList.add("hidden");
@@ -109,13 +109,11 @@ function showScreen(screenName) {
     header.classList.remove("hidden");
   }
 
-  // Show selected screen
   const screen = document.getElementById(`${screenName}-screen`);
   if (screen) {
     screen.classList.add("active");
   }
 
-  // Update screen content
   if (screenName === "home") {
     updateHomeScreen();
   } else if (screenName === "game") {
@@ -133,45 +131,31 @@ function updateHomeScreen() {
 
 // Initialize game
 function initGame() {
-  // Shuffle items
   availableItems = [...gameItems].sort(() => Math.random() - 0.5);
 
-  // Update score display
   document.getElementById("game-score").textContent = currentScore;
 
-  // Update items remaining
   const itemsRemainingEl = document.getElementById("items-remaining");
   if (itemsRemainingEl) {
     itemsRemainingEl.textContent = availableItems.length;
   }
 
-  // Clear feedback
   const feedback = document.getElementById("feedback");
   feedback.textContent = "";
   feedback.className = "feedback";
 
-  // Render items
   renderItems();
-
-  // Setup bins event listeners
   setupBins();
 }
 
 // Setup bins with event listeners
 function setupBins() {
-  const bins = document.querySelectorAll(".bin");
-  bins.forEach((bin) => {
-    // Remove old listeners by cloning
-    const newBin = bin.cloneNode(true);
-    bin.parentNode.replaceChild(newBin, bin);
-  });
-
-  // Add new listeners
   document.querySelectorAll(".bin").forEach((bin) => {
     bin.addEventListener("dragover", handleDragOver);
     bin.addEventListener("dragleave", handleDragLeave);
     bin.addEventListener("drop", handleDrop);
   });
+  console.log("✅ Bins setup complete");
 }
 
 // Render draggable items
@@ -183,56 +167,33 @@ function renderItems() {
     const itemDiv = document.createElement("div");
     itemDiv.className = "item";
     itemDiv.draggable = true;
-    itemDiv.setAttribute("data-id", item.id);
-    itemDiv.setAttribute("data-type", item.type);
+    itemDiv.dataset.id = item.id;
+    itemDiv.dataset.type = item.type;
 
     itemDiv.innerHTML = `
-            <div class="item-icon">${item.icon}</div>
-            <div class="item-label">${item.name}</div>
-        `;
+      <div class="item-icon">${item.icon}</div>
+      <div class="item-label">${item.name}</div>
+    `;
 
-    itemDiv.addEventListener("dragstart", dragStart);
-    itemDiv.addEventListener("dragend", dragEnd);
+    itemDiv.addEventListener("dragstart", handleDragStart);
+    itemDiv.addEventListener("dragend", handleDragEnd);
 
     container.appendChild(itemDiv);
-
-    console.log(
-      "Rendered item:",
-      item.name,
-      "ID:",
-      item.id,
-      "Type:",
-      item.type
-    ); // Debug
   });
+  console.log("✅ Items rendered:", availableItems.length);
 }
 
-// Drag and drop functions
-function dragStart(e) {
-  // Find the item element (in case we're dragging from a child)
-  const item = e.target.closest(".item");
-  if (!item) return;
-
-  e.dataTransfer.effectAllowed = "move";
-  e.dataTransfer.setData("text/plain", item.getAttribute("data-id"));
-  e.dataTransfer.setData("itemType", item.getAttribute("data-type"));
+// Drag handlers
+function handleDragStart(e) {
+  const item = e.currentTarget;
+  draggedItemId = item.dataset.id;
+  draggedItemType = item.dataset.type;
   item.classList.add("dragging");
-
-  console.log(
-    "✅ Dragging item:",
-    item.getAttribute("data-id"),
-    "Type:",
-    item.getAttribute("data-type")
-  );
+  console.log("🎯 Dragging:", draggedItemId, "Type:", draggedItemType);
 }
 
-function dragEnd(e) {
-  // Find the item element (in case we're dragging from a child)
-  const item = e.target.closest(".item");
-  if (item) {
-    item.classList.remove("dragging");
-  }
-  // Remove drag-over from all bins
+function handleDragEnd(e) {
+  e.currentTarget.classList.remove("dragging");
   document.querySelectorAll(".bin").forEach((bin) => {
     bin.classList.remove("drag-over");
   });
@@ -240,16 +201,11 @@ function dragEnd(e) {
 
 function handleDragOver(e) {
   e.preventDefault();
-  e.stopPropagation();
-  const bin = e.currentTarget;
-  bin.classList.add("drag-over");
+  e.currentTarget.classList.add("drag-over");
 }
 
 function handleDragLeave(e) {
-  e.preventDefault();
-  e.stopPropagation();
   const bin = e.currentTarget;
-  // Only remove if we're actually leaving the bin
   if (!bin.contains(e.relatedTarget)) {
     bin.classList.remove("drag-over");
   }
@@ -257,33 +213,22 @@ function handleDragLeave(e) {
 
 function handleDrop(e) {
   e.preventDefault();
-  e.stopPropagation();
-
   const bin = e.currentTarget;
   bin.classList.remove("drag-over");
 
-  const itemId = e.dataTransfer.getData("text/plain");
-  const itemType = e.dataTransfer.getData("itemType");
-  const binType = bin.getAttribute("data-type");
-
+  const binType = bin.dataset.type;
   const feedback = document.getElementById("feedback");
 
-  console.log("=== DROP DEBUG ===");
-  console.log("Item ID:", itemId);
-  console.log("Item Type:", itemType);
-  console.log("Bin Type:", binType);
-  console.log("Match:", itemType === binType);
-  console.log("================");
+  console.log("📦 Drop - Item:", draggedItemType, "Bin:", binType);
 
-  // Validate data
-  if (!itemId || !itemType || !binType) {
-    console.error("❌ Missing data:", { itemId, itemType, binType });
+  if (!draggedItemId || !draggedItemType || !binType) {
+    console.error("❌ Missing data");
     return;
   }
 
-  if (itemType === binType) {
-    // Correct!
+  if (draggedItemType === binType) {
     console.log("✅ CORRECT!");
+
     currentScore += 10;
     currentUser.score = currentScore;
     saveCurrentUser();
@@ -293,25 +238,22 @@ function handleDrop(e) {
     feedback.textContent = "¡Correcto! / Correct! ✅";
     feedback.className = "feedback correct";
 
-    // Play success sound effect (visual feedback)
     bin.style.transform = "scale(1.1)";
     setTimeout(() => {
       bin.style.transform = "";
     }, 200);
 
-    // Remove item from available items
     availableItems = availableItems.filter(
-      (item) => item.id.toString() !== itemId
+      (item) => item.id.toString() !== draggedItemId.toString()
     );
+
     renderItems();
 
-    // Update items remaining
     const itemsRemainingEl = document.getElementById("items-remaining");
     if (itemsRemainingEl) {
       itemsRemainingEl.textContent = availableItems.length;
     }
 
-    // Check if game is complete
     if (availableItems.length === 0) {
       setTimeout(() => {
         feedback.textContent =
@@ -324,25 +266,25 @@ function handleDrop(e) {
       }, 1000);
     }
   } else {
-    // Incorrect
     console.log("❌ INCORRECT!");
     feedback.textContent = "Intentá otra vez / Try again ❌";
     feedback.className = "feedback incorrect";
 
-    // Shake animation for incorrect
     bin.style.animation = "shake 0.5s";
     setTimeout(() => {
       bin.style.animation = "";
     }, 500);
   }
 
-  // Clear feedback after 2 seconds
   setTimeout(() => {
     if (availableItems.length > 0) {
       feedback.textContent = "";
       feedback.className = "feedback";
     }
   }, 2000);
+
+  draggedItemId = null;
+  draggedItemType = null;
 }
 
 // Update ranking
@@ -355,7 +297,7 @@ function updateRanking() {
 
   if (users.length === 0) {
     leaderboard.innerHTML =
-      '<p style="text-align: center; color: #718096;">No hay usuarios todavía / No users yet</p>';
+      '<p style="text-align: center; color: #4a5568;">No hay usuarios todavía / No users yet</p>';
     return;
   }
 
@@ -371,10 +313,10 @@ function updateRanking() {
       index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "";
 
     item.innerHTML = `
-            <span class="leaderboard-rank">${medal || index + 1}</span>
-            <span class="leaderboard-name">${user.name}</span>
-            <span class="leaderboard-score">${user.score}</span>
-        `;
+      <span class="leaderboard-rank">${medal || index + 1}</span>
+      <span class="leaderboard-name">${user.name}</span>
+      <span class="leaderboard-score">${user.score}</span>
+    `;
 
     leaderboard.appendChild(item);
   });
@@ -408,7 +350,7 @@ window.addEventListener("load", () => {
     if (loader) {
       loader.classList.add("hidden");
     }
-  }, 1500); // Show loader for at least 1.5 seconds
+  }, 1500);
 });
 
 // Start app
