@@ -350,5 +350,15 @@ function createConfetti() {
   }
 }
 
+// Hide loader when app is ready
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    const loader = document.getElementById("app-loader");
+    if (loader) {
+      loader.classList.add("hidden");
+    }
+  }, 1500); // Show loader for at least 1.5 seconds
+});
+
 // Start app
 init();
