@@ -19,6 +19,11 @@ const SUPABASE_ANON_KEY = "TU_KEY_AQUI";
 
 ### 3. Crear la tabla en Supabase
 
+**⚠️ IMPORTANTE:** ¿Ya tienes la tabla `users` creada?
+
+- ✅ **SÍ** → Usa `supabase-migration.sql` (ver `MIGRATION-GUIDE.md`)
+- ❌ **NO** → Sigue estos pasos:
+
 1. Ve a tu proyecto en Supabase: https://supabase.com/dashboard
 2. Click en "SQL Editor" en el menú lateral
 3. Click en "New Query"
@@ -28,6 +33,7 @@ const SUPABASE_ANON_KEY = "TU_KEY_AQUI";
 Esto creará:
 
 - ✅ Tabla `users` con todos los campos necesarios
+- ✅ Columna `avg_time` para tiempo promedio
 - ✅ Índices para mejor performance
 - ✅ Row Level Security (RLS) habilitado
 - ✅ Políticas de seguridad configuradas

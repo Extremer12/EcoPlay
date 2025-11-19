@@ -1,7 +1,7 @@
 // Supabase Configuration
 const SUPABASE_URL = "https://okciuqlwsbrdyshybbqb.supabase.co";
 const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rY2l1cWx3c2JyZHlzaHliYnFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIwNDI4NzAsImV4cCI6MjA0NzYxODg3MH0.8xYvqZQvXqYvXqYvXqYvXqYvXqYvXqYvXqYvXqYvXqY"; // Reemplaza con tu key real
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rY2l1cWx3c2JyZHlzaHliYnFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDY3MzgsImV4cCI6MjA3OTA4MjczOH0.fJbVO22iixTIJWwnFVW_WKFbAreRCU6573CgM0feJG8"; // Reemplaza con tu key real
 
 // Inicializar Supabase Client
 let supabase = null;
