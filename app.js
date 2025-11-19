@@ -163,8 +163,8 @@ function renderItems() {
     const itemDiv = document.createElement("div");
     itemDiv.className = "item";
     itemDiv.draggable = true;
-    itemDiv.dataset.id = item.id;
-    itemDiv.dataset.type = item.type;
+    itemDiv.setAttribute("data-id", item.id);
+    itemDiv.setAttribute("data-type", item.type);
 
     itemDiv.innerHTML = `
             <div class="item-icon">${item.icon}</div>
@@ -175,19 +175,38 @@ function renderItems() {
     itemDiv.addEventListener("dragend", dragEnd);
 
     container.appendChild(itemDiv);
+
+    console.log(
+      "Rendered item:",
+      item.name,
+      "ID:",
+      item.id,
+      "Type:",
+      item.type
+    ); // Debug
   });
 }
 
 // Drag and drop functions
 function dragStart(e) {
+  // Find the item element (in case we're dragging from a child)
+  const item = e.target.closest(".item");
+  if (!item) return;
+
   e.dataTransfer.effectAllowed = "move";
-  e.dataTransfer.setData("text/plain", e.target.dataset.id);
-  e.dataTransfer.setData("itemType", e.target.dataset.type);
-  e.target.classList.add("dragging");
+  e.dataTransfer.setData("text/plain", item.dataset.id);
+  e.dataTransfer.setData("itemType", item.dataset.type);
+  item.classList.add("dragging");
+
+  console.log("Dragging item:", item.dataset.id, "Type:", item.dataset.type); // Debug
 }
 
 function dragEnd(e) {
-  e.target.classList.remove("dragging");
+  // Find the item element (in case we're dragging from a child)
+  const item = e.target.closest(".item");
+  if (item) {
+    item.classList.remove("dragging");
+  }
   // Remove drag-over from all bins
   document.querySelectorAll(".bin").forEach((bin) => {
     bin.classList.remove("drag-over");
@@ -205,20 +224,35 @@ function allowDrop(e) {
 
 function drop(e) {
   e.preventDefault();
+  e.stopPropagation();
 
   // Find the bin element (in case we dropped on a child element)
   const bin = e.target.closest(".bin");
-  if (!bin) return;
+  if (!bin) {
+    console.log("No bin found!");
+    return;
+  }
 
   bin.classList.remove("drag-over");
 
   const itemId = e.dataTransfer.getData("text/plain");
   const itemType = e.dataTransfer.getData("itemType");
-  const binType = bin.dataset.type;
+  const binType = bin.getAttribute("data-type");
 
   const feedback = document.getElementById("feedback");
 
-  console.log("Item type:", itemType, "Bin type:", binType); // Debug
+  console.log("=== DROP DEBUG ===");
+  console.log("Item ID:", itemId);
+  console.log("Item Type:", itemType);
+  console.log("Bin Type:", binType);
+  console.log("Match:", itemType === binType);
+  console.log("================");
+
+  // Validate data
+  if (!itemId || !itemType || !binType) {
+    console.error("Missing data:", { itemId, itemType, binType });
+    return;
+  }
 
   if (itemType === binType) {
     // Correct!
