@@ -9,71 +9,19 @@
   <body>
     <!-- Loader -->
     <div id="app-loader" class="loader-container">
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="area"></div>
-      <div class="loader">
-        <p class="text">
-          CARGANDO...<br />
-          <span class="loader-subtitle">♻️ EcoPlay</span>
-        </p>
-        <span style="--i: 100; --d: 0"></span>
-        <div class="groove">
-          <span style="--i: 50; --d: 100"></span>
-          <span style="--i: 30; --d: 150"></span>
-          <span style="--i: 50; --d: 180"></span>
+      <div class="loader-content">
+        <h1 class="loader-title">♻️ EcoPlay</h1>
+        <p class="loader-text">Cargando...</p>
+        <div class="loader-spinner">
+          <div class="spinner-dot"></div>
+          <div class="spinner-dot"></div>
+          <div class="spinner-dot"></div>
         </div>
-        <span style="--i: 10; --d: 230"></span>
-        <div class="groove">
-          <span style="--i: 100; --d: 240"></span>
-          <span style="--i: 15; --d: 340"></span>
-          <span style="--i: 140; --d: 355"></span>
-        </div>
-        <span style="--i: 60; --d: 495"></span>
-        <div class="groove">
-          <span style="--i: 60; --d: 555"></span>
-          <span style="--i: 50; --d: 615"></span>
-          <span style="--i: 20; --d: 665"></span>
-        </div>
-        <span style="--i: 40; --d: 685"></span>
       </div>
     </div>
 
     <!-- Header Navigation -->
-    <header id="header" class="hidden"></header>div></div>div>div>div></div>""
+    <header id="header" class="hidden"></header><div class="container"></div>
       <nav>
         <button onclick="showScreen('home')" class="nav-btn">🏠 Inicio</button>
         <button onclick="showScreen('game')" class="nav-btn">
@@ -179,48 +127,23 @@
 
         <!-- Bins -->
         <div class="bins-container">
-          <div
-            class="bin bin-plastic"
-            data-type="plastic"
-            ondrop="drop(event)"
-            ondragover="allowDrop(event)"
-          >
+          <div class="bin bin-plastic" data-type="plastic">
             <div class="bin-icon">🧴</div>
             <div class="bin-label">Plástico<br /><span>Plastic</span></div>
           </div>
-          <div
-            class="bin bin-paper"
-            data-type="paper"
-            ondrop="drop(event)"
-            ondragover="allowDrop(event)"
-          >
+          <div class="bin bin-paper" data-type="paper">
             <div class="bin-icon">📄</div>
             <div class="bin-label">Papel<br /><span>Paper</span></div>
           </div>
-          <div
-            class="bin bin-glass"
-            data-type="glass"
-            ondrop="drop(event)"
-            ondragover="allowDrop(event)"
-          >
+          <div class="bin bin-glass" data-type="glass">
             <div class="bin-icon">🍾</div>
             <div class="bin-label">Vidrio<br /><span>Glass</span></div>
           </div>
-          <div
-            class="bin bin-metal"
-            data-type="metal"
-            ondrop="drop(event)"
-            ondragover="allowDrop(event)"
-          >
+          <div class="bin bin-metal" data-type="metal">
             <div class="bin-icon">🥫</div>
             <div class="bin-label">Metal<br /><span>Metal</span></div>
           </div>
-          <div
-            class="bin bin-organic"
-            data-type="organic"
-            ondrop="drop(event)"
-            ondragover="allowDrop(event)"
-          >
+          <div class="bin bin-organic" data-type="organic">
             <div class="bin-icon">🍎</div>
             <div class="bin-label">Orgánico<br /><span>Organic</span></div>
           </div>

@@ -152,6 +152,26 @@ function initGame() {
 
   // Render items
   renderItems();
+
+  // Setup bins event listeners
+  setupBins();
+}
+
+// Setup bins with event listeners
+function setupBins() {
+  const bins = document.querySelectorAll(".bin");
+  bins.forEach((bin) => {
+    // Remove old listeners by cloning
+    const newBin = bin.cloneNode(true);
+    bin.parentNode.replaceChild(newBin, bin);
+  });
+
+  // Add new listeners
+  document.querySelectorAll(".bin").forEach((bin) => {
+    bin.addEventListener("dragover", handleDragOver);
+    bin.addEventListener("dragleave", handleDragLeave);
+    bin.addEventListener("drop", handleDrop);
+  });
 }
 
 // Render draggable items
@@ -194,11 +214,16 @@ function dragStart(e) {
   if (!item) return;
 
   e.dataTransfer.effectAllowed = "move";
-  e.dataTransfer.setData("text/plain", item.dataset.id);
-  e.dataTransfer.setData("itemType", item.dataset.type);
+  e.dataTransfer.setData("text/plain", item.getAttribute("data-id"));
+  e.dataTransfer.setData("itemType", item.getAttribute("data-type"));
   item.classList.add("dragging");
 
-  console.log("Dragging item:", item.dataset.id, "Type:", item.dataset.type); // Debug
+  console.log(
+    "✅ Dragging item:",
+    item.getAttribute("data-id"),
+    "Type:",
+    item.getAttribute("data-type")
+  );
 }
 
 function dragEnd(e) {
@@ -213,26 +238,28 @@ function dragEnd(e) {
   });
 }
 
-function allowDrop(e) {
+function handleDragOver(e) {
   e.preventDefault();
-  // Find the bin element (in case we're hovering over a child)
-  const bin = e.target.closest(".bin");
-  if (bin) {
-    bin.classList.add("drag-over");
+  e.stopPropagation();
+  const bin = e.currentTarget;
+  bin.classList.add("drag-over");
+}
+
+function handleDragLeave(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  const bin = e.currentTarget;
+  // Only remove if we're actually leaving the bin
+  if (!bin.contains(e.relatedTarget)) {
+    bin.classList.remove("drag-over");
   }
 }
 
-function drop(e) {
+function handleDrop(e) {
   e.preventDefault();
   e.stopPropagation();
 
-  // Find the bin element (in case we dropped on a child element)
-  const bin = e.target.closest(".bin");
-  if (!bin) {
-    console.log("No bin found!");
-    return;
-  }
-
+  const bin = e.currentTarget;
   bin.classList.remove("drag-over");
 
   const itemId = e.dataTransfer.getData("text/plain");
@@ -250,12 +277,13 @@ function drop(e) {
 
   // Validate data
   if (!itemId || !itemType || !binType) {
-    console.error("Missing data:", { itemId, itemType, binType });
+    console.error("❌ Missing data:", { itemId, itemType, binType });
     return;
   }
 
   if (itemType === binType) {
     // Correct!
+    console.log("✅ CORRECT!");
     currentScore += 10;
     currentUser.score = currentScore;
     saveCurrentUser();
@@ -297,6 +325,7 @@ function drop(e) {
     }
   } else {
     // Incorrect
+    console.log("❌ INCORRECT!");
     feedback.textContent = "Intentá otra vez / Try again ❌";
     feedback.className = "feedback incorrect";
 
@@ -315,18 +344,6 @@ function drop(e) {
     }
   }, 2000);
 }
-
-// Remove drag-over class when leaving
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll(".bin").forEach((bin) => {
-    bin.addEventListener("dragleave", (e) => {
-      // Only remove if we're actually leaving the bin (not just moving to a child)
-      if (!bin.contains(e.relatedTarget)) {
-        bin.classList.remove("drag-over");
-      }
-    });
-  });
-});
 
 // Update ranking
 function updateRanking() {
