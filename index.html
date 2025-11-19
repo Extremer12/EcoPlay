@@ -36,7 +36,7 @@
 
           <div class="input-container-3d">
             <div class="shadow-input"></div>
-            <button type="button" class="input-button-shadow">
+            <button type="button" class="input-button-shadow" aria-label="Usuario"></button>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -99,8 +99,15 @@
         <h1 class="game-title">Arrastrá la basura al tacho correcto.</h1>
         <p class="game-subtitle">Learn English while you recycle!</p>
 
-        <div class="score-display">
-          Tu Puntaje / Your Score: <span id="game-score">0</span>
+        <div class="game-stats">
+          <div class="score-display">
+            <div class="stat-label">Tu Puntaje / Your Score</div>
+            <div class="stat-value" id="game-score">0</div>
+          </div>
+          <div class="items-remaining">
+            <div class="stat-label">Items Restantes / Remaining</div>
+            <div class="stat-value" id="items-remaining">0</div>
+          </div>
         </div>
 
         <div id="feedback" class="feedback"></div>
@@ -157,9 +164,18 @@
         <!-- Items to drag -->
         <div id="items-container" class="items-container"></div>
 
-        <button onclick="showScreen('home')" class="btn-secondary">
-          🏠 Volver al Inicio / Home
-        </button>
+        <div class="game-buttons">
+          <button type="button" onclick="initGame()" class="btn-restart">
+            🔄 Reiniciar / Restart
+          </button>
+          <button
+            type="button"
+            onclick="showScreen('home')"
+            class="btn-secondary"
+          >
+            🏠 Volver al Inicio / Home
+          </button>
+        </div>
       </div>
     </div>
 

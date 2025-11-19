@@ -139,6 +139,12 @@ function initGame() {
   // Update score display
   document.getElementById("game-score").textContent = currentScore;
 
+  // Update items remaining
+  const itemsRemainingEl = document.getElementById("items-remaining");
+  if (itemsRemainingEl) {
+    itemsRemainingEl.textContent = availableItems.length;
+  }
+
   // Clear feedback
   const feedback = document.getElementById("feedback");
   feedback.textContent = "";
@@ -182,22 +188,37 @@ function dragStart(e) {
 
 function dragEnd(e) {
   e.target.classList.remove("dragging");
+  // Remove drag-over from all bins
+  document.querySelectorAll(".bin").forEach((bin) => {
+    bin.classList.remove("drag-over");
+  });
 }
 
 function allowDrop(e) {
   e.preventDefault();
-  e.currentTarget.classList.add("drag-over");
+  // Find the bin element (in case we're hovering over a child)
+  const bin = e.target.closest(".bin");
+  if (bin) {
+    bin.classList.add("drag-over");
+  }
 }
 
 function drop(e) {
   e.preventDefault();
-  e.currentTarget.classList.remove("drag-over");
+
+  // Find the bin element (in case we dropped on a child element)
+  const bin = e.target.closest(".bin");
+  if (!bin) return;
+
+  bin.classList.remove("drag-over");
 
   const itemId = e.dataTransfer.getData("text/plain");
   const itemType = e.dataTransfer.getData("itemType");
-  const binType = e.currentTarget.dataset.type;
+  const binType = bin.dataset.type;
 
   const feedback = document.getElementById("feedback");
+
+  console.log("Item type:", itemType, "Bin type:", binType); // Debug
 
   if (itemType === binType) {
     // Correct!
@@ -210,26 +231,46 @@ function drop(e) {
     feedback.textContent = "¡Correcto! / Correct! ✅";
     feedback.className = "feedback correct";
 
+    // Play success sound effect (visual feedback)
+    bin.style.transform = "scale(1.1)";
+    setTimeout(() => {
+      bin.style.transform = "";
+    }, 200);
+
     // Remove item from available items
     availableItems = availableItems.filter(
       (item) => item.id.toString() !== itemId
     );
     renderItems();
 
+    // Update items remaining
+    const itemsRemainingEl = document.getElementById("items-remaining");
+    if (itemsRemainingEl) {
+      itemsRemainingEl.textContent = availableItems.length;
+    }
+
     // Check if game is complete
     if (availableItems.length === 0) {
       setTimeout(() => {
         feedback.textContent =
           "¡Completaste el juego! / You completed the game! 🎉";
+        feedback.className = "feedback complete";
+        createConfetti();
         setTimeout(() => {
           initGame();
-        }, 2000);
+        }, 3000);
       }, 1000);
     }
   } else {
     // Incorrect
     feedback.textContent = "Intentá otra vez / Try again ❌";
     feedback.className = "feedback incorrect";
+
+    // Shake animation for incorrect
+    bin.style.animation = "shake 0.5s";
+    setTimeout(() => {
+      bin.style.animation = "";
+    }, 500);
   }
 
   // Clear feedback after 2 seconds
@@ -245,7 +286,10 @@ function drop(e) {
 document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll(".bin").forEach((bin) => {
     bin.addEventListener("dragleave", (e) => {
-      e.currentTarget.classList.remove("drag-over");
+      // Only remove if we're actually leaving the bin (not just moving to a child)
+      if (!bin.contains(e.relatedTarget)) {
+        bin.classList.remove("drag-over");
+      }
     });
   });
 });
@@ -283,6 +327,27 @@ function updateRanking() {
 
     leaderboard.appendChild(item);
   });
+}
+
+// Confetti effect
+function createConfetti() {
+  const colors = ["#48bb78", "#38a169", "#fbbf24", "#f59e0b", "#3b82f6"];
+  const confettiCount = 50;
+
+  for (let i = 0; i < confettiCount; i++) {
+    const confetti = document.createElement("div");
+    confetti.className = "confetti";
+    confetti.style.left = Math.random() * 100 + "%";
+    confetti.style.backgroundColor =
+      colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animationDelay = Math.random() * 0.5 + "s";
+    confetti.style.animationDuration = Math.random() * 2 + 2 + "s";
+    document.body.appendChild(confetti);
+
+    setTimeout(() => {
+      confetti.remove();
+    }, 4000);
+  }
 }
 
 // Start app

@@ -532,27 +532,88 @@ nav {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.score-display {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  padding: 20px;
-  border-radius: 25px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: #2f855a;
+.game-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
   margin-bottom: 25px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  border: 2px solid rgba(72, 187, 120, 0.3);
 }
 
-.score-display span {
-  font-size: 32px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-weight: 800;
+.score-display,
+.items-remaining {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  padding: 20px 15px;
+  border-radius: 25px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  border: 3px solid #000;
+  position: relative;
+  overflow: hidden;
+}
+
+.score-display {
+  background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%);
+}
+
+.items-remaining {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2d3748;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 36px;
+  font-weight: 900;
+  color: #000;
+  text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.5);
+}
+
+.game-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.btn-restart {
+  padding: 15px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: "Poppins", sans-serif;
+  border: 3px solid #000;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #000;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 15px;
+  box-shadow: 0 6px 20px rgba(251, 191, 36, 0.4);
+}
+
+.btn-restart:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(251, 191, 36, 0.6);
+}
+
+.btn-restart:active {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 500px) {
+  .game-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .game-buttons {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Feedback */
@@ -583,6 +644,25 @@ nav {
   color: #742a2a;
   box-shadow: 0 10px 30px rgba(245, 101, 101, 0.4);
   animation: shake 0.5s ease;
+}
+
+.feedback.complete {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #000;
+  box-shadow: 0 10px 30px rgba(251, 191, 36, 0.6);
+  animation: bounceIn 0.5s ease, pulse 1s ease infinite;
+  font-size: 20px;
+  border: 3px solid #000;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 @keyframes bounceIn {
@@ -981,5 +1061,27 @@ nav {
 @media (min-width: 768px) {
   .bins-container {
     grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+/* Confetti Animation */
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  z-index: 9999;
+  animation: confetti-fall linear forwards;
+  border-radius: 50%;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
   }
 }
