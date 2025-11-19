@@ -18,28 +18,53 @@ let availableItems = [];
 let draggedItemId = null;
 let draggedItemType = null;
 let supabase = null;
+let useSupabase = false;
+let gameStartTime = null;
+let gameTimer = null;
+let elapsedTime = 0;
 
 // Initialize app
 async function init() {
-  // Initialize Supabase
-  if (window.initSupabase) {
-    window.initSupabase();
-    supabase = window.supabase.createClient(
-      "https://okciuqlwsbrdyshybbqb.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rY2l1cWx3c2JyZHlzaHliYnFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIwNDI4NzAsImV4cCI6MjA0NzYxODg3MH0.8xYvqZQvXqYvXqYvXqYvXqYvXqYvXqYvXqYvXqYvXqY"
-    );
-  }
+  console.log("🚀 Initializing app...");
 
-  await checkSession();
+  // Try to initialize Supabase
+  try {
+    if (typeof window.supabase !== "undefined") {
+      const SUPABASE_URL = "https://okciuqlwsbrdyshybbqb.supabase.co";
+      // IMPORTANTE: Reemplaza esta key con tu key real de Supabase
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rY2l1cWx3c2JyZHlzaHliYnFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1MDY3MzgsImV4cCI6MjA3OTA4MjczOH0.fJbVO22iixTIJWwnFVW_WKFbAreRCU6573CgM0feJG8";
+
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+      // Test connection
+      const { data, error } = await supabase
+        .from("users")
+        .select("count")
+        .limit(1);
+
+      if (!error) {
+        useSupabase = true;
+        console.log("✅ Supabase connected");
+        await checkSession();
+      } else {
+        throw error;
+      }
+    } else {
+      throw new Error("Supabase library not loaded");
+    }
+  } catch (error) {
+    console.warn(
+      "⚠️ Supabase not available, using localStorage:",
+      error.message
+    );
+    useSupabase = false;
+    loadLocalUser();
+  }
 }
 
-// Check if user is logged in
+// Check if user is logged in (Supabase)
 async function checkSession() {
-  if (!supabase) {
-    showScreen("login");
-    return;
-  }
-
   const {
     data: { session },
   } = await supabase.auth.getSession();
@@ -50,6 +75,31 @@ async function checkSession() {
   } else {
     showScreen("login");
   }
+}
+
+// Load user from localStorage (fallback)
+function loadLocalUser() {
+  const userId = localStorage.getItem("currentUserId");
+  if (userId) {
+    const users = getLocalUsers();
+    currentUser = users.find((u) => u.id === userId);
+    if (currentUser) {
+      currentScore = currentUser.score || 0;
+      showScreen("home");
+      return;
+    }
+  }
+  showScreen("login");
+}
+
+// LocalStorage functions
+function getLocalUsers() {
+  const users = localStorage.getItem("recyclingUsers");
+  return users ? JSON.parse(users) : [];
+}
+
+function saveLocalUsers(users) {
+  localStorage.setItem("recyclingUsers", JSON.stringify(users));
 }
 
 // Load user data from Supabase
@@ -67,12 +117,13 @@ async function loadUserData(user) {
       name: data.name,
       email: user.email,
       score: data.score || 0,
+      avgTime: data.avg_time || 0,
     };
     currentScore = data.score || 0;
     console.log("✅ User loaded:", currentUser);
   } else {
-    // Create user profile if doesn't exist
-    const { data: newUser, error: createError } = await supabase
+    // Create user profile
+    const { data: newUser } = await supabase
       .from("users")
       .insert([
         {
@@ -80,6 +131,7 @@ async function loadUserData(user) {
           name: user.email.split("@")[0],
           email: user.email,
           score: 0,
+          avg_time: 0,
         },
       ])
       .select()
@@ -92,6 +144,7 @@ async function loadUserData(user) {
         name: newUser.name,
         email: newUser.email,
         score: 0,
+        avgTime: 0,
       };
       currentScore = 0;
     }
@@ -117,28 +170,41 @@ async function handleLogin() {
     return;
   }
 
-  if (!supabase) {
-    alert("Error: Supabase no está inicializado");
-    return;
-  }
+  if (useSupabase) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      });
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password,
-    });
+      if (error) throw error;
 
-    if (error) throw error;
+      await loadUserData(data.user);
+      showScreen("home");
 
-    await loadUserData(data.user);
-    showScreen("home");
+      document.getElementById("email-input").value = "";
+      document.getElementById("password-input").value = "";
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Error al iniciar sesión: " + error.message);
+    }
+  } else {
+    // Fallback: localStorage login
+    const users = getLocalUsers();
+    const user = users.find(
+      (u) => u.email === email && u.password === password
+    );
 
-    // Clear inputs
-    document.getElementById("email-input").value = "";
-    document.getElementById("password-input").value = "";
-  } catch (error) {
-    console.error("Login error:", error);
-    alert("Error al iniciar sesión: " + error.message);
+    if (user) {
+      currentUser = user;
+      currentScore = user.score || 0;
+      localStorage.setItem("currentUserId", user.id);
+      showScreen("home");
+      document.getElementById("email-input").value = "";
+      document.getElementById("password-input").value = "";
+    } else {
+      alert("Email o contraseña incorrectos / Incorrect email or password");
+    }
   }
 }
 
@@ -160,69 +226,120 @@ async function handleSignup() {
     return;
   }
 
-  if (!supabase) {
-    alert("Error: Supabase no está inicializado");
-    return;
-  }
+  if (useSupabase) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+      });
 
-  try {
-    const { data, error } = await supabase.auth.signUp({
+      if (error) throw error;
+
+      await supabase.from("users").insert([
+        {
+          auth_id: data.user.id,
+          name: name,
+          email: email,
+          score: 0,
+          avg_time: 0,
+        },
+      ]);
+
+      alert(
+        "¡Cuenta creada! Por favor iniciá sesión / Account created! Please login"
+      );
+      showScreen("login");
+
+      document.getElementById("signup-name-input").value = "";
+      document.getElementById("signup-email-input").value = "";
+      document.getElementById("signup-password-input").value = "";
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Error al crear cuenta: " + error.message);
+    }
+  } else {
+    // Fallback: localStorage signup
+    const users = getLocalUsers();
+
+    if (users.find((u) => u.email === email)) {
+      alert("Este email ya está registrado / This email is already registered");
+      return;
+    }
+
+    const newUser = {
+      id: Date.now().toString(),
+      name: name,
       email: email,
       password: password,
-    });
+      score: 0,
+      avgTime: 0,
+    };
 
-    if (error) throw error;
-
-    // Create user profile
-    const { error: profileError } = await supabase.from("users").insert([
-      {
-        auth_id: data.user.id,
-        name: name,
-        email: email,
-        score: 0,
-      },
-    ]);
-
-    if (profileError) throw profileError;
+    users.push(newUser);
+    saveLocalUsers(users);
 
     alert(
       "¡Cuenta creada! Por favor iniciá sesión / Account created! Please login"
     );
     showScreen("login");
 
-    // Clear inputs
     document.getElementById("signup-name-input").value = "";
     document.getElementById("signup-email-input").value = "";
     document.getElementById("signup-password-input").value = "";
-  } catch (error) {
-    console.error("Signup error:", error);
-    alert("Error al crear cuenta: " + error.message);
   }
 }
 
 // Logout
 async function logout() {
-  if (supabase) {
+  if (useSupabase && supabase) {
     await supabase.auth.signOut();
+  } else {
+    localStorage.removeItem("currentUserId");
   }
   currentUser = null;
   currentScore = 0;
   showScreen("login");
 }
 
-// Save score to Supabase
-async function saveScore() {
-  if (!currentUser || !supabase) return;
+// Save score
+async function saveScore(timeInSeconds) {
+  if (!currentUser) return;
 
-  const { error } = await supabase
-    .from("users")
-    .update({ score: currentScore })
-    .eq("id", currentUser.id);
+  // Calculate new average time
+  const gamesPlayed = Math.floor(currentScore / 90); // 9 items * 10 points
+  const newAvgTime =
+    gamesPlayed > 0
+      ? ((currentUser.avgTime || 0) * gamesPlayed + timeInSeconds) /
+        (gamesPlayed + 1)
+      : timeInSeconds;
 
-  if (error) {
-    console.error("Error saving score:", error);
+  if (useSupabase) {
+    const { error } = await supabase
+      .from("users")
+      .update({
+        score: currentScore,
+        avg_time: Math.round(newAvgTime),
+      })
+      .eq("id", currentUser.id);
+
+    if (!error) {
+      currentUser.avgTime = Math.round(newAvgTime);
+      console.log(
+        "✅ Score saved:",
+        currentScore,
+        "Avg time:",
+        Math.round(newAvgTime)
+      );
+    }
   } else {
-    console.log("✅ Score saved:", currentScore);
+    const users = getLocalUsers();
+    const index = users.findIndex((u) => u.id === currentUser.id);
+    if (index !== -1) {
+      users[index].score = currentScore;
+      users[index].avgTime = Math.round(newAvgTime);
+      saveLocalUsers(users);
+      currentUser.avgTime = Math.round(newAvgTime);
+    }
   }
 }
 
@@ -274,11 +391,42 @@ function initGame() {
   feedback.textContent = "";
   feedback.className = "feedback";
 
+  // Start timer
+  gameStartTime = Date.now();
+  elapsedTime = 0;
+  startTimer();
+
   renderItems();
   setupBins();
 }
 
-// Setup bins with event listeners
+// Timer functions
+function startTimer() {
+  if (gameTimer) clearInterval(gameTimer);
+
+  gameTimer = setInterval(() => {
+    elapsedTime = Math.floor((Date.now() - gameStartTime) / 1000);
+    updateTimerDisplay();
+  }, 100);
+}
+
+function stopTimer() {
+  if (gameTimer) {
+    clearInterval(gameTimer);
+    gameTimer = null;
+  }
+}
+
+function updateTimerDisplay() {
+  const timerEl = document.getElementById("game-timer");
+  if (timerEl) {
+    const minutes = Math.floor(elapsedTime / 60);
+    const seconds = elapsedTime % 60;
+    timerEl.textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  }
+}
+
+// Setup bins
 function setupBins() {
   document.querySelectorAll(".bin").forEach((bin) => {
     bin.addEventListener("dragover", handleDragOver);
@@ -287,7 +435,7 @@ function setupBins() {
   });
 }
 
-// Render draggable items
+// Render items
 function renderItems() {
   const container = document.getElementById("items-container");
   container.innerHTML = "";
@@ -346,13 +494,10 @@ async function handleDrop(e) {
   const binType = bin.dataset.type;
   const feedback = document.getElementById("feedback");
 
-  if (!draggedItemId || !draggedItemType || !binType) {
-    return;
-  }
+  if (!draggedItemId || !draggedItemType || !binType) return;
 
   if (draggedItemType === binType) {
     currentScore += 10;
-    await saveScore();
 
     document.getElementById("game-score").textContent = currentScore;
 
@@ -376,9 +521,11 @@ async function handleDrop(e) {
     }
 
     if (availableItems.length === 0) {
+      stopTimer();
+      await saveScore(elapsedTime);
+
       setTimeout(() => {
-        feedback.textContent =
-          "¡Completaste el juego! / You completed the game! 🎉";
+        feedback.textContent = `¡Completaste el juego en ${elapsedTime}s! / You completed the game in ${elapsedTime}s! 🎉`;
         feedback.className = "feedback complete";
         createConfetti();
         setTimeout(() => {
@@ -407,24 +554,34 @@ async function handleDrop(e) {
   draggedItemType = null;
 }
 
-// Update ranking from Supabase
+// Update ranking
 async function updateRanking() {
-  if (!supabase) {
-    document.getElementById("leaderboard").innerHTML =
-      '<p style="text-align: center; color: #4a5568;">Error: No se pudo conectar a la base de datos</p>';
-    return;
-  }
-
-  const { data: users, error } = await supabase
-    .from("users")
-    .select("*")
-    .order("score", { ascending: false })
-    .limit(20);
-
   const leaderboard = document.getElementById("leaderboard");
   leaderboard.innerHTML = "";
 
-  if (error || !users || users.length === 0) {
+  let users = [];
+
+  if (useSupabase) {
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .order("score", { ascending: false })
+      .order("avg_time", { ascending: true })
+      .limit(20);
+
+    if (!error && data) {
+      users = data;
+    }
+  } else {
+    users = getLocalUsers()
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (a.avgTime || 999999) - (b.avgTime || 999999);
+      })
+      .slice(0, 20);
+  }
+
+  if (users.length === 0) {
     leaderboard.innerHTML =
       '<p style="text-align: center; color: #4a5568;">No hay usuarios todavía / No users yet</p>';
     return;
@@ -438,7 +595,6 @@ async function updateRanking() {
     else if (index === 1) item.classList.add("top2");
     else if (index === 2) item.classList.add("top3");
 
-    // Highlight current user
     if (currentUser && user.id === currentUser.id) {
       item.style.border = "3px solid #48bb78";
       item.style.fontWeight = "900";
@@ -446,18 +602,23 @@ async function updateRanking() {
 
     const medal =
       index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "";
+    const avgTime = user.avg_time || user.avgTime || 0;
+    const timeDisplay = avgTime > 0 ? `⏱️ ${avgTime}s` : "";
 
     item.innerHTML = `
       <span class="leaderboard-rank">${medal || index + 1}</span>
       <span class="leaderboard-name">${user.name}</span>
-      <span class="leaderboard-score">${user.score || 0}</span>
+      <span class="leaderboard-stats">
+        <span class="leaderboard-score">${user.score || 0}</span>
+        <span class="leaderboard-time">${timeDisplay}</span>
+      </span>
     `;
 
     leaderboard.appendChild(item);
   });
 }
 
-// Confetti effect
+// Confetti
 function createConfetti() {
   const colors = ["#48bb78", "#38a169", "#fbbf24", "#f59e0b", "#3b82f6"];
   const confettiCount = 50;
@@ -478,7 +639,7 @@ function createConfetti() {
   }
 }
 
-// Hide loader when app is ready
+// Hide loader
 window.addEventListener("load", () => {
   setTimeout(() => {
     const loader = document.getElementById("app-loader");
